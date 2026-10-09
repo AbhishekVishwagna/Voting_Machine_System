@@ -3,7 +3,7 @@
  * Created on: 13-Apr-2026
  * Author: Abhishek B Vishwagna
  *
- * ELEC5620M Mini project
+ * Voting Machine Project
 */
 #include "timer.h"
 
