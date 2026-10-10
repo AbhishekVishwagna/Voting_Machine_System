@@ -56,3 +56,83 @@ The ARM Cortex-A9 processor serves as the central controller for the voting mach
 | `RESULT` | The voting period ends. The software identifies the winner and displays data on the LCD. |
 
 All peripheral devices are mapped into memory. The processor periodically reads the buttons, writes directly to the LCD controller via the LT24 interface, and plays audio via the audio codec's control registers the onboard.
+
+The system operates as a finite state machine (FSM) with four distinct states. Each state transition is triggered either by direct user input via the hardware push buttons or automatically by the voting period countdown timer. The diagram below illustrates the full lifecycle of an election session.
+
+```text
+                                   KEY0 pressed
+                         ┌─────────────────────────────┐
+                         │                              ▼
+                    +---------+                    +---------+
+                    |         |                    |         |
+                    |  IDLE   |                    |  VOTING |◄─────────────┐
+                    | (Welcome|                    |         |               │
+                    | Screen) |                    +---------+               │
+                    +---------+                         │                    │
+                                                        │ KEY1/KEY2/KEY3     │
+                                                        │ pressed            │ Vote registered
+                                                        ▼                    │ (beep plays)
+                                                   +---------+               │
+                                                   |  Vote   |───────────────┘
+                                                   |Recorded |
+                                                   +---------+
+                                                        │
+                                                        │ Timer expires
+                                                        ▼
+                                                   +---------+
+                                                   |         |
+                                                   | RESULT  |
+                                                   | (Winner |
+                                                   | Screen) |
+                                                   +---------+
+                                                        │
+                                                        │ KEY0 pressed
+                                                        ▼
+                                                   Back to IDLE
+```
+
+
+> **State Summary**
+> - `IDLE` — System is ready and awaiting election start
+> - `VOTING` — Buttons active; votes are recorded; countdown running
+> - `RESULT` — Timer has expired; winner is computed and displayed on LCD
+> - Pressing KEY0 from `RESULT` resets all vote counts and returns to `IDLE`
+
+---
+
+## File Structure
+
+```text
+ELEC5620M-Voting-Machine/
+│
+├── Voting Machine System/          # Full system integration 
+│   ├── audio.c                     # Audio IP initialisation, beep and fanfare implementation
+│   ├── audio.h                     # Few Functions: play_vote_beep(), play_close_fanfare()
+│   ├── lcd.h                       # Few Functions: lcd_showWelcome(), lcd_showCandidates(), lcd_showResults()
+│   ├── lcd.c                       # Isolated test harness for LCD screen hardware testing
+│   ├── machine.h                   # Shared header: candidate structs, state machine enum, defines
+│   ├── main.c                      # Main program: Full system integration
+│   ├── timer.c                     # Interval Timer countdown, expiry detection, 7-seg output
+│   └── timer.h                     # Few Functions: SystemTimer_start(), VoterTimer_start()
+│
+├── Voting Machine Core/            # Core logic & integration 
+│   ├── machine.h                   # Shared header: candidate structs, state machine enum, defines
+│   └── main.c                      # Main program: FSM, vote engine, full system integration
+│
+├── LCD Display/                    # LCD display module
+│   ├── lcd_display.h               # Few Functions: lcd_showWelcome(), lcd_showCandidates(), lcd_showResults()
+│   └── lcd_main.c                  # Isolated test harness for LCD screen hardware testing
+│
+├── Timer and 7 Segment/            # Input, timer & 7-segment module
+│   ├── timer.c                     # Interval Timer countdown, expiry detection, 7-seg output
+│   ├── timer.h                     # Few Functions: SystemTimer_start(), VoterTimer_start()
+│
+├── Audio/                          # Audio module
+│   ├── audio.c                     # Audio IP initialisation, beep and fanfare implementation
+│   ├── audio.h                     # Few Functions: play_vote_beep(), play_close_fanfare()
+│
+├── .gitignore                      # Excludes build artefacts and IDE-generated files
+└── README.md                       # Full project documentation
+```
+
+---
