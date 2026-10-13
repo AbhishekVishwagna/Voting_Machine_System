@@ -14,16 +14,6 @@ This project involves the design and implementation of Voting Machine System. Th
 ---
 ## Hardware Requirements
 
-### Development Board
-| Component | Detail |
-|-----------|--------|
-| Board | Terasic DE1-SoC |
-| CPU | ARM Cortex-A9 |
-| FPGA | Altera Cyclone V SoC |
-| IDE | Arm Development Studio |
-
-
-
 ### Required Peripherals
 | Peripheral | Usage in Project |
 |------------|-----------------|
@@ -99,21 +89,28 @@ The system operates as a finite state machine (FSM) with four distinct states. E
 > - Pressing KEY0 from `RESULT` resets all vote counts and returns to `IDLE`
 
 ---
+## Hardware Testing
+The voting machine logic is mainly implemented in main.c using a four state machine process (STATE_IDLE, STATE_VOTING, STATE_CLOSED, STATE_RESULT) which is driven by a polling loop on the ARM Cortex-A9.
+
+<img width="1290" height="731" alt="WhatsApp Image 2026-10-13 at 4 22 25 PM (2)" src="https://github.com/user-attachments/assets/96132f66-d390-4f81-a7ea-b8f25ecd38e5" />
+
+A custom library for an LCD display was created in order to draw characters and numbers to the LT24 LCD display. With the help of this library, several screens were designed in order to facilitate the voting process.The audio system is responsible for providing instant sounds during the voting process, only using the on-board Audio Codec. The Timer, LED and 7‑Segment module enforces all timing‑related constraints in the voting system and provides immediate visual feedback during the election process. An overall voting session timer (configurable, e.g. 3 or 10 minutes) starts when the system begins and runs continuously in the background. In addition, a per voter countdown timer allocates 60 seconds to each voter. A voter session begins when activated via KEY0 and ends immediately when a vote is cast or when the time expires. 
+
+<img width="1290" height="738" alt="WhatsApp Image 2026-10-13 at 4 22 25 PM" src="https://github.com/user-attachments/assets/ceab388a-f023-4bd9-9c97-944ea4722361" />
+
+This guarantees that each voter receives exactly one bounded opportunity to vote.Countdown during an active voter session for a successfully completed vote 00 when a voter times out when the polling session is closed
+- The LED bar provides clear system‑state indications:
+- Voting active (LEDR0 illuminated)
+- Vote successfully recorded(LEDR0 TO LEDR3 illuminated)
+- Voter timed out (LEDR0 illuminated with 00 on display)
+- Polling session closed (all LEDs illuminated)
+
+<img width="1290" height="727" alt="WhatsApp Image 2026-10-13 at 4 22 24 PM" src="https://github.com/user-attachments/assets/b759cd51-ce11-468b-8987-20c755c3300f" />
 
 ## File Structure
 
 ```text
 ELEC5620M-Voting-Machine/
-│
-├── Voting Machine System/          # Full system integration 
-│   ├── audio.c                     # Audio IP initialisation, beep and fanfare implementation
-│   ├── audio.h                     # Few Functions: play_vote_beep(), play_close_fanfare()
-│   ├── lcd.h                       # Few Functions: lcd_showWelcome(), lcd_showCandidates(), lcd_showResults()
-│   ├── lcd.c                       # Isolated test harness for LCD screen hardware testing
-│   ├── machine.h                   # Shared header: candidate structs, state machine enum, defines
-│   ├── main.c                      # Main program: Full system integration
-│   ├── timer.c                     # Interval Timer countdown, expiry detection, 7-seg output
-│   └── timer.h                     # Few Functions: SystemTimer_start(), VoterTimer_start()
 │
 ├── Voting Machine Core/            # Core logic & integration 
 │   ├── machine.h                   # Shared header: candidate structs, state machine enum, defines
